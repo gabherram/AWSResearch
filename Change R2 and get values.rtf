@@ -1,0 +1,134 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2761
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;\red0\green0\blue0;}
+{\*\expandedcolortbl;;\csgray\c0;}
+\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 Change R2\
+\
+\pard\tx560\tx1120\tx1680\tx2240\tx2800\tx3360\tx3920\tx4480\tx5040\tx5600\tx6160\tx6720\pardirnatural\partightenfactor0
+\cf2 Sub ChangeR2Format()\
+    Dim ws As Worksheet\
+    Dim chartObj As ChartObject\
+    Dim ser As Series\
+    Dim tline As Trendline\
+    Dim eq As String\
+    Dim newEq As String\
+    Dim pos As Integer\
+    Dim charR2 As String\
+    \
+    ' Define the character sequence for "R?"\
+    charR2 = "R" & ChrW(178)\
+    \
+    ' Loop through all worksheets\
+    For Each ws In ThisWorkbook.Worksheets\
+        ' Loop through all chart objects in the worksheet\
+        For Each chartObj In ws.ChartObjects\
+            ' Loop through all series in the chart\
+            For Each ser In chartObj.Chart.SeriesCollection\
+                ' Loop through all trendlines in the series\
+                For Each tline In ser.Trendlines\
+                    If tline.DisplayRSquared Then\
+                        ' Get the equation text\
+                        eq = tline.DataLabel.Text\
+                        newEq = eq\
+                        ' Find and replace the specific "R?" character\
+                        pos = InStr(eq, charR2)\
+                        If pos > 0 Then\
+                            newEq = Replace(newEq, charR2, "R2")\
+                        End If\
+                        pos = InStr(eq, "R^2")\
+                        If pos > 0 Then\
+                            newEq = Replace(newEq, "R^2", "R2")\
+                        End If\
+                        ' Update the equation text if it was modified\
+                        If eq <> newEq Then\
+                            tline.DataLabel.Text = newEq\
+                        End If\
+                    End If\
+                Next tline\
+            Next ser\
+        Next chartObj\
+    Next ws\
+End Sub\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+\
+\
+\
+Get all values from charts:\
+Sub ExtractTrendlineInfo()\
+    Dim ws As Worksheet\
+    Dim outputWs As Worksheet\
+    Dim chartObj As ChartObject\
+    Dim ser As Series\
+    Dim tline As Trendline\
+    Dim r As Integer\
+    Dim eq As String\
+    Dim formula As String\
+    Dim rsq As String\
+    Dim pos As Integer\
+    Dim station As String\
+    \
+    ' Create a new worksheet for output\
+    On Error Resume Next\
+    Application.DisplayAlerts = False\
+    Worksheets("Trendline Info").Delete\
+    Application.DisplayAlerts = True\
+    On Error GoTo 0\
+    Set outputWs = ThisWorkbook.Worksheets.Add\
+    outputWs.Name = "Trendline Info"\
+    \
+    ' Set headers for the output\
+    r = 2\
+    outputWs.Cells(1, 1).Value = "Station"\
+    outputWs.Cells(1, 2).Value = "Trendline"\
+    outputWs.Cells(1, 3).Value = "Equation"\
+    outputWs.Cells(1, 4).Value = "R^2"\
+    \
+    ' Loop through all worksheets\
+    For Each ws In ThisWorkbook.Worksheets\
+        If ws.Name <> "Trendline Info" Then\
+            ' Loop through all chart objects in the worksheet\
+            For Each chartObj In ws.ChartObjects\
+                station = chartObj.Chart.ChartTitle.Text\
+                station = Split(station, " ")(1)  ' Extract the station number from the title\
+                ' Loop through all series in the chart\
+                For Each ser In chartObj.Chart.SeriesCollection\
+                    ' Loop through all trendlines in the series\
+                    For Each tline In ser.Trendlines\
+                        outputWs.Cells(r, 1).Value = station\
+                        outputWs.Cells(r, 2).Value = tline.Name\
+                        eq = tline.DataLabel.Text\
+                        \
+                        ' Separate the equation from the R^2 value\
+                        pos = InStr(eq, "R?=")\
+                        If pos = 0 Then\
+                            pos = InStr(eq, "R^2=")\
+                        End If\
+                        If pos = 0 Then\
+                            pos = InStr(eq, "R2 = ")\
+                        End If\
+                        \
+                        If pos > 0 Then\
+                            formula = Left(eq, pos - 1)\
+                            rsq = Mid(eq, pos + 3)\
+                        Else\
+                            formula = eq\
+                            rsq = "N/A"\
+                        End If\
+                        \
+                        outputWs.Cells(r, 3).Value = formula\
+                        outputWs.Cells(r, 4).Value = rsq\
+                        \
+                        r = r + 1\
+                    Next tline\
+                Next ser\
+            Next chartObj\
+        End If\
+    Next ws\
+End Sub\
+\
+}
